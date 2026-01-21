@@ -1,0 +1,82 @@
+services:
+  tracker:
+    image: lednerb/opentracker-docker
+    ports:
+      - "6969:6969/udp"
+      - "6969:6969/tcp"
+    networks:
+      - bt_network
+
+  seeder:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/data
+      - ./results:/results
+    networks:
+      - bt_network
+    depends_on:
+      - tracker
+    environment:
+      - TRACKER_HOST=tracker
+      - TRACKER_PORT=6969
+    command: python /app/bt.py seeder /data/${FILE_PATH} /data 1
+
+  leecher1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/data
+      - ./results:/results
+    networks:
+      - bt_network
+    depends_on:
+      - tracker
+      - seeder
+    environment:
+      - TRACKER_HOST=tracker
+      - TRACKER_PORT=6969
+      - LEECHER_ID=leecher1
+    command: python /app/bt.py leecher /data/${FILE_PATH} /data/downloads_peer1 ${ITERATIONS}
+
+  leecher2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/data
+      - ./results:/results
+    networks:
+      - bt_network
+    depends_on:
+      - tracker
+      - seeder
+    environment:
+      - TRACKER_HOST=tracker
+      - TRACKER_PORT=6969
+      - LEECHER_ID=leecher2
+    command: python /app/bt.py leecher /data/${FILE_PATH} /data/downloads_peer2 ${ITERATIONS}
+
+  leecher3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/data
+      - ./results:/results
+    networks:
+      - bt_network
+    depends_on:
+      - tracker
+      - seeder
+    environment:
+      - TRACKER_HOST=tracker
+      - TRACKER_PORT=6969
+      - LEECHER_ID=leecher3
+    command: python /app/bt.py leecher /data/${FILE_PATH} /data/downloads_peer3 ${ITERATIONS}
+
+networks:
+  bt_network:
+    driver: bridge 
